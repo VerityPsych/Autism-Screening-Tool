@@ -1,0 +1,1304 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Autism Screening & Referral Suite</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg:#f7f6f3;
+      --card:#ffffff;
+      --text:#242424;
+      --muted:#6d6a64;
+      --line:#ddd8cf;
+      --line-strong:#cbc4b7;
+      --teal:#5b9b90;
+      --teal-dark:#3f766d;
+      --teal-soft:#e8f3f0;
+      --blue:#4f82b8;
+      --blue-soft:#ebf3fb;
+      --gold:#b38a47;
+      --gold-soft:#f8f0e3;
+      --coral:#bf6d58;
+      --coral-soft:#f8ece7;
+      --purple:#7464b8;
+      --purple-soft:#efebfb;
+      --danger:#b84a4a;
+      --danger-soft:#fbecec;
+      --shadow:0 8px 24px rgba(0,0,0,.04);
+      --radius:16px;
+      --radius-sm:10px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:linear-gradient(180deg,#faf9f7 0%, #f4f1eb 100%);
+      color:var(--text);
+    }
+    .page{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px 18px 56px;
+    }
+    .hero{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+    .hero h1{
+      margin:0 0 6px;
+      font-size:30px;
+      line-height:1.1;
+      letter-spacing:-.02em;
+    }
+    .hero p{
+      margin:0;
+      color:var(--muted);
+      max-width:760px;
+      line-height:1.55;
+    }
+    .mini-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .nav{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:18px 0 22px;
+      padding-bottom:14px;
+      border-bottom:1px solid var(--line);
+    }
+    .nav-btn{
+      border:1px solid var(--line-strong);
+      background:#fff;
+      color:var(--muted);
+      border-radius:999px;
+      padding:9px 15px;
+      cursor:pointer;
+      font-size:13px;
+      transition:.18s ease;
+    }
+    .nav-btn.active,.nav-btn:hover{
+      background:var(--teal);
+      color:#fff;
+      border-color:var(--teal);
+    }
+    .section{display:none}
+    .section.active{display:block}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+      margin-bottom:14px;
+    }
+    .card h2{
+      margin:0 0 5px;
+      font-size:18px;
+    }
+    .card h3{
+      margin:0;
+      font-size:15px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+      margin-top:4px;
+    }
+    .row{display:grid;gap:12px}
+    .row.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .row.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field{margin-top:12px}
+    .field label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:5px;
+    }
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--line-strong);
+      border-radius:12px;
+      font:inherit;
+      color:var(--text);
+      background:#fff;
+    }
+    textarea{min-height:88px; resize:vertical}
+    textarea.report-box{min-height:430px; line-height:1.65; white-space:pre-wrap}
+    .badge{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:600;
+      margin-bottom:10px;
+    }
+    .b-teal{background:var(--teal-soft); color:var(--teal-dark)}
+    .b-blue{background:var(--blue-soft); color:var(--blue)}
+    .b-gold{background:var(--gold-soft); color:var(--gold)}
+    .b-coral{background:var(--coral-soft); color:var(--coral)}
+    .b-purple{background:var(--purple-soft); color:var(--purple)}
+    .b-danger{background:var(--danger-soft); color:var(--danger)}
+    .alert{
+      padding:12px 14px;
+      border-radius:12px;
+      font-size:13px;
+      line-height:1.55;
+      margin-bottom:12px;
+      border:1px solid;
+    }
+    .info{background:var(--blue-soft); color:#2f5f93; border-color:#cfe0f3}
+    .warn{background:var(--gold-soft); color:#8f6723; border-color:#ebd7ad}
+    .danger{background:var(--danger-soft); color:#9b3030; border-color:#f0c1c1}
+    .success{background:var(--teal-soft); color:#2d675f; border-color:#c7e0da}
+    .q-item{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      margin-top:10px;
+    }
+    .q-text{
+      font-size:14px;
+      line-height:1.55;
+      margin-bottom:10px;
+    }
+    .q-opts{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .q-opt{
+      border:1px solid var(--line-strong);
+      background:#fff;
+      color:var(--muted);
+      padding:7px 11px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .q-opt.sel-0{background:var(--teal-soft);color:var(--teal-dark);border-color:#bad9d2}
+    .q-opt.sel-1{background:var(--blue-soft);color:var(--blue);border-color:#c8ddf2}
+    .q-opt.sel-2{background:var(--gold-soft);color:#9b6d20;border-color:#ecd5a2}
+    .q-opt.sel-3{background:var(--coral-soft);color:#9e513d;border-color:#edc7bb}
+    .progress-wrap{
+      margin-bottom:14px;
+    }
+    .progress-meta{
+      display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      font-size:12px;color:var(--muted);margin-bottom:5px;
+    }
+    .progress{
+      height:8px;background:#ece8e1;border-radius:999px;overflow:hidden;
+    }
+    .progress > div{
+      height:100%;width:0;background:var(--teal);transition:.25s ease;
+    }
+    .btn{
+      border:1px solid var(--line-strong);
+      background:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-size:14px;
+      color:var(--text);
+    }
+    .btn:hover{filter:brightness(.98)}
+    .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+    .btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn.gold{background:var(--gold);color:#fff;border-color:var(--gold)}
+    .btn.coral{background:var(--coral);color:#fff;border-color:var(--coral)}
+    .btn-group{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;
+    }
+    .score-panel{
+      display:grid;
+      grid-template-columns:260px 1fr;
+      gap:16px;
+      align-items:stretch;
+    }
+    .ring{
+      background:#fbfaf8;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:flex-start;
+      min-height:160px;
+    }
+    .ring-num{
+      font-size:40px;
+      font-weight:700;
+      letter-spacing:-.03em;
+      line-height:1;
+    }
+    .small{
+      font-size:12px;color:var(--muted)
+    }
+    .domain-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .ds{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+    }
+    .ds-name{font-size:12px;color:var(--muted)}
+    .ds-bar{height:6px;border-radius:999px;background:#ece8e1;overflow:hidden;margin:7px 0}
+    .ds-bar > div{height:100%}
+    .ds-val{font-size:12px;font-weight:700}
+    .pill-grid{
+      display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;
+    }
+    .pill{
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:12px;
+      background:#f7f4ef;
+      border:1px solid var(--line);
+    }
+    .checklist{
+      list-style:none;
+      padding:0;
+      margin:0;
+    }
+    .checklist li{
+      padding:8px 0;
+      border-bottom:1px solid var(--line);
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+    .checklist li:last-child{border-bottom:none}
+    .sql-box{
+      background:#111827;
+      color:#e5eefc;
+      border-radius:14px;
+      padding:16px;
+      overflow:auto;
+      font-size:12px;
+      line-height:1.6;
+      white-space:pre;
+    }
+    .footer-note{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+      margin-top:10px;
+    }
+    @media (max-width: 860px){
+      .row.two,.row.three,.score-panel,.domain-grid{grid-template-columns:1fr}
+      .page{padding-left:14px;padding-right:14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1>Autism Screening & Referral Suite</h1>
+        <p>Refined for an independent psychometrist practice in South Africa. This version separates a parent-friendly feedback report from a practitioner referral report, keeps wording within scope, and includes optional Supabase storage for GitHub deployment.</p>
+      </div>
+      <div class="mini-actions">
+        <button class="btn" onclick="downloadHTMLSnapshot()">Export HTML backup</button>
+        <button class="btn primary" onclick="exportAssessmentJSON()">Export case JSON</button>
+      </div>
+    </div>
+
+    <div class="nav" id="nav">
+      <button class="nav-btn active" data-tab="intake">Intake</button>
+      <button class="nav-btn" data-tab="screening">Screening</button>
+      <button class="nav-btn" data-tab="observations">Observations</button>
+      <button class="nav-btn" data-tab="reports">Reports</button>
+      <button class="nav-btn" data-tab="data">Data & Setup</button>
+    </div>
+
+    <section class="section active" id="tab-intake">
+      <div class="card">
+        <span class="badge b-teal">Client details</span>
+        <h2>Client, caregiver, and referral details</h2>
+        <p class="sub">Use this section to capture demographic, referral, and contextual information that supports screening and later referral writing.</p>
+
+        <div class="row three">
+          <div class="field"><label>Client first name(s)</label><input id="client_name" type="text" placeholder="First name(s)"></div>
+          <div class="field"><label>Client surname</label><input id="client_surname" type="text" placeholder="Surname"></div>
+          <div class="field"><label>Client ID / file number</label><input id="case_ref" type="text" placeholder="Unique case reference"></div>
+        </div>
+
+        <div class="row three">
+          <div class="field"><label>Date of birth</label><input id="client_dob" type="date"></div>
+          <div class="field"><label>Chronological age</label><input id="client_age" type="text" placeholder="Auto-calculated"></div>
+          <div class="field"><label>Gender / pronouns</label>
+            <select id="client_gender">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Non-binary</option>
+              <option>Other / prefer not to say</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row three">
+          <div class="field"><label>Home language(s)</label><input id="client_language" type="text" placeholder="e.g. English, Afrikaans"></div>
+          <div class="field"><label>School / institution</label><input id="client_school" type="text" placeholder="School / centre / workplace"></div>
+          <div class="field"><label>Grade / year</label><input id="client_grade" type="text" placeholder="e.g. Grade 2"></div>
+        </div>
+
+        <div class="row three">
+          <div class="field"><label>Primary caregiver</label><input id="caregiver_name" type="text" placeholder="Full name"></div>
+          <div class="field"><label>Relationship to client</label><input id="caregiver_relationship" type="text" placeholder="Mother / father / guardian"></div>
+          <div class="field"><label>Caregiver contact</label><input id="caregiver_contact" type="text" placeholder="Phone or email"></div>
+        </div>
+
+        <div class="row three">
+          <div class="field"><label>Referring person / professional</label><input id="referrer_name" type="text" placeholder="Name and profession"></div>
+          <div class="field"><label>Assessment date</label><input id="assessment_date" type="date"></div>
+          <div class="field"><label>Assessor name</label><input id="assessor_name" type="text" placeholder="Psychometrist name"></div>
+        </div>
+
+        <div class="row three">
+          <div class="field"><label>HPCSA registration number</label><input id="assessor_hpcsa" type="text" placeholder="HPCSA number"></div>
+          <div class="field"><label>Practice number</label><input id="assessor_practice" type="text" placeholder="Practice number"></div>
+          <div class="field"><label>Medical aid / funder</label><input id="medical_aid" type="text" placeholder="Optional"></div>
+        </div>
+
+        <div class="field"><label>Reason for referral</label><textarea id="referral_reason" placeholder="Summarise the concern, referral question, and main presenting difficulties"></textarea></div>
+        <div class="field"><label>Developmental and medical notes</label><textarea id="developmental_notes" placeholder="Pregnancy and birth history, developmental milestones, language, regression, diagnoses, medications, therapy history"></textarea></div>
+        <div class="field"><label>Education and functioning notes</label><textarea id="education_notes" placeholder="Classroom functioning, social presentation, support already in place, academic or adaptive concerns"></textarea></div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="clearSection('tab-intake')">Clear intake</button>
+          <button class="btn primary" onclick="goTab('screening')">Continue to screening</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-screening">
+      <div class="card">
+        <span class="badge b-blue">Screening</span>
+        <h2>Autism-related feature screening</h2>
+        <div class="alert info">This screening is designed to support structured concern identification, not diagnosis. Use it alongside developmental history, behavioural observation, and only current HPCSA-classified instruments where applicable.</div>
+
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span id="progLabel">0 of 0 answered</span>
+            <span id="progPct">0%</span>
+          </div>
+          <div class="progress"><div id="progBar"></div></div>
+        </div>
+
+        <div id="questionContainer"></div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="goTab('intake')">Back</button>
+          <button class="btn" onclick="clearScreening()">Clear screening</button>
+          <button class="btn primary" onclick="calculateProfile()">Generate profile</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-observations">
+      <div class="card">
+        <span class="badge b-gold">Clinical observations</span>
+        <h2>Observed presentation and referral flags</h2>
+        <p class="sub">This section strengthens the practitioner-facing report and helps you document what was seen directly in session versus what was reported by caregivers or teachers.</p>
+
+        <div class="row two">
+          <div class="field"><label>Behavioural observations</label><textarea id="obs_behaviour" placeholder="Cooperation, attention, transitions, activity level, play, repetitive behaviours"></textarea></div>
+          <div class="field"><label>Communication observations</label><textarea id="obs_communication" placeholder="Eye contact, reciprocity, gestures, language use, prosody, response to social bids"></textarea></div>
+        </div>
+        <div class="row two">
+          <div class="field"><label>Sensory / regulation observations</label><textarea id="obs_sensory" placeholder="Sensory seeking or avoidance, distress cues, self-regulation, coping"></textarea></div>
+          <div class="field"><label>Strengths and protective factors</label><textarea id="obs_strengths" placeholder="Interests, engagement, family support, learning strengths, positive responses to structure"></textarea></div>
+        </div>
+
+        <div class="row three">
+          <div class="field">
+            <label>Risk / referral flag 1</label>
+            <select id="flag_multidisciplinary">
+              <option value="">Select</option>
+              <option>No immediate flag</option>
+              <option>Recommend psychologist / psychiatrist referral</option>
+              <option>Recommend multidisciplinary assessment</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Risk / referral flag 2</label>
+            <select id="flag_school_support">
+              <option value="">Select</option>
+              <option>No immediate flag</option>
+              <option>School support discussion indicated</option>
+              <option>Occupational therapy / speech-language referral indicated</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Urgency</label>
+            <select id="flag_urgency">
+              <option value="">Select</option>
+              <option>Routine follow-up</option>
+              <option>Prompt referral recommended</option>
+              <option>Priority referral recommended</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field"><label>Standardised measures administered or planned</label><textarea id="measures_used" placeholder="Example: SCQ parent form; SRS-2; Vineland-3 interview; cognitive profile pending"></textarea></div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="clearSection('tab-observations')">Clear observations</button>
+          <button class="btn primary" onclick="goTab('reports')">Continue to reports</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-reports">
+      <div class="card">
+        <span class="badge b-purple">Summary profile</span>
+        <h2>Concern profile and domain summary</h2>
+        <div id="scoreSummary" class="small">Complete the screening and click “Generate profile” to populate scores.</div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-teal">Parent report</span>
+        <h2>Parent / caregiver feedback report</h2>
+        <div class="alert info">This report uses plain, supportive language and avoids diagnostic statements. It is suitable for feedback to families and can be adapted before sharing.</div>
+        <textarea id="parent_report" class="report-box">Complete the intake, screening, and observation sections, then click "Generate profile" to create the parent report.</textarea>
+        <div class="btn-group">
+          <button class="btn" onclick="copyText('parent_report')">Copy parent report</button>
+          <button class="btn blue" onclick="downloadTextFile('parent_report','parent-feedback-report.txt')">Download TXT</button>
+          <button class="btn primary" onclick="regenerateReports()">Regenerate reports</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-coral">Practitioner report</span>
+        <h2>Psychometrist referral / practitioner report</h2>
+        <div class="alert warn">This version is structured to support referral onward to a psychologist, psychiatrist, speech-language therapist, occupational therapist, school support team, or multidisciplinary team where indicated.</div>
+        <textarea id="practitioner_report" class="report-box">Complete the intake, screening, and observation sections, then click "Generate profile" to create the practitioner report.</textarea>
+        <div class="btn-group">
+          <button class="btn" onclick="copyText('practitioner_report')">Copy practitioner report</button>
+          <button class="btn coral" onclick="downloadTextFile('practitioner_report','practitioner-referral-report.txt')">Download TXT</button>
+          <button class="btn gold" onclick="saveCaseToSupabase()">Save case to Supabase</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-data">
+      <div class="card">
+        <span class="badge b-gold">Supabase</span>
+        <h2>GitHub + Supabase setup</h2>
+        <p class="sub">Enter your project values once, save them locally in your browser, and the tool can insert case data directly from GitHub Pages using your public anon key and Row Level Security policies.</p>
+
+        <div class="row three">
+          <div class="field"><label>Supabase URL</label><input id="sb_url" type="text" placeholder="https://YOURPROJECT.supabase.co"></div>
+          <div class="field"><label>Supabase anon key</label><input id="sb_key" type="text" placeholder="Public anon key"></div>
+          <div class="field"><label>Table name</label><input id="sb_table" type="text" value="autism_screening_cases"></div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn primary" onclick="saveSupabaseConfig()">Save config</button>
+          <button class="btn" onclick="loadSupabaseConfig()">Reload saved config</button>
+          <button class="btn" onclick="testSupabaseConnection()">Test connection</button>
+        </div>
+
+        <div id="saveStatus" class="footer-note">No Supabase action yet.</div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-blue">Recommended table</span>
+        <h2>Suggested Supabase SQL</h2>
+        <p class="sub">Run this once in the Supabase SQL editor. It creates a simple table for storing intake data, calculated scores, and both generated reports.</p>
+        <div class="sql-box" id="sqlSnippet"></div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-purple">Practice notes</span>
+        <h2>Scope-safe reminders built into this version</h2>
+        <ul class="checklist">
+          <li>The parent report uses non-diagnostic wording and focuses on concerns, strengths, and next steps.</li>
+          <li>The practitioner report separates observed features, caregiver-reported history, and referral recommendations.</li>
+          <li>The tool avoids final diagnostic wording and frames findings as screening indicators or reasons for onward referral.</li>
+          <li>The workflow leaves room for inclusion of standardised measures, but you should only use instruments currently classified and certified for use under the applicable HPCSA framework.</li>
+          <li>Data export and local browser backups are included so you are not dependent on Supabase only.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const domains = [
+      {
+        name: "Social communication and reciprocity",
+        color: "var(--teal)",
+        items: [
+          "The child initiates social interaction with others in a spontaneous and age-appropriate way.",
+          "The child responds meaningfully when others initiate social engagement.",
+          "The child shares enjoyment, interests, or achievements with others.",
+          "The child uses and understands eye contact, facial expression, and gesture in an integrated way.",
+          "The child appears aware of other people’s emotions, intentions, or perspectives.",
+          "The child maintains relationships or friendships appropriately for developmental level."
+        ]
+      },
+      {
+        name: "Restricted, repetitive, and inflexible behaviour",
+        color: "var(--gold)",
+        items: [
+          "The child shows repetitive movements, repetitive speech, or repetitive use of objects.",
+          "The child becomes significantly distressed when routines or expected patterns change.",
+          "The child has narrow or highly intense interests that dominate attention or conversation.",
+          "The child shows repetitive play themes, lining up, sorting, or unusual object use.",
+          "The child echoes words or phrases or uses scripted language out of context."
+        ]
+      },
+      {
+        name: "Sensory processing features",
+        color: "var(--blue)",
+        items: [
+          "The child is unusually sensitive to sound, light, clothing texture, food texture, or smell.",
+          "The child actively seeks sensory input such as spinning, crashing, pressure, or visual stimulation.",
+          "Sensory responses interfere with participation in daily routines, school, meals, or transitions.",
+          "The child displays unusual visual inspection or close examination of objects."
+        ]
+      },
+      {
+        name: "Language and pragmatic communication",
+        color: "var(--coral)",
+        items: [
+          "Language development was delayed or atypical relative to expectations.",
+          "There has been loss or regression of previously established language or communication skills.",
+          "Speech prosody, tone, volume, or rhythm appears unusual for context.",
+          "The child struggles with figurative language, jokes, sarcasm, or implied meaning.",
+          "The child’s communication is often one-sided, literal, or difficult to adapt to context."
+        ]
+      },
+      {
+        name: "Adaptive functioning and everyday participation",
+        color: "var(--purple)",
+        items: [
+          "The child needs more support than expected for self-care or age-expected daily living skills.",
+          "Transitions between tasks, settings, or routines are difficult to manage.",
+          "Emotional regulation is significantly affected by frustration, unpredictability, or sensory load.",
+          "The child finds group participation difficult without notable adult support.",
+          "Safety awareness or flexible coping in familiar and unfamiliar situations is limited."
+        ]
+      }
+    ];
+
+    const options = [
+      "Not evident / rarely",
+      "Occasionally evident",
+      "Often evident",
+      "Clearly and consistently evident"
+    ];
+
+    const responses = {};
+    let latestProfile = null;
+
+    function todayISO(){
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function getNextCaseNumber(){
+      const raw = localStorage.getItem('autismToolCaseCounter');
+      const current = parseInt(raw || '0', 10);
+      const next = Number.isFinite(current) ? current + 1 : 1;
+      localStorage.setItem('autismToolCaseCounter', String(next));
+      return next;
+    }
+
+    function formatCaseRef(num){
+      return `CASE-${String(num).padStart(5, '0')}`;
+    }
+
+    function ensureCaseRef(forceNew = false){
+      const caseRef = document.getElementById('case_ref');
+      if(!caseRef) return '';
+      if(forceNew || !caseRef.value.trim()){
+        caseRef.value = formatCaseRef(getNextCaseNumber());
+      }
+      return caseRef.value;
+    }
+
+    function initDefaults(){
+      const assessEl = document.getElementById('assessment_date');
+      if(assessEl && !assessEl.value) assessEl.value = todayISO();
+      ensureCaseRef(false);
+      buildQuestions();
+      loadSupabaseConfig();
+      renderSQLSnippet();
+      autoSaveForm();
+    }
+
+    function buildQuestions(){
+      const wrap = document.getElementById('questionContainer');
+      wrap.innerHTML = '';
+      domains.forEach((domain, di) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <span class="badge b-teal">Domain ${di+1}</span>
+          <h3>${domain.name}</h3>
+          <p class="sub">Rate each item based on combined intake information, caregiver report, and assessment impressions.</p>
+        `;
+        domain.items.forEach((item, qi) => {
+          const key = `${di}-${qi}`;
+          const q = document.createElement('div');
+          q.className = 'q-item';
+          q.innerHTML = `<div class="q-text">${di+1}.${qi+1} ${item}</div><div class="q-opts" id="opts-${key}"></div>`;
+          const optWrap = q.querySelector('.q-opts');
+          options.forEach((label, oi) => {
+            const btn = document.createElement('button');
+            btn.className = 'q-opt';
+            btn.type = 'button';
+            btn.textContent = label;
+            btn.onclick = () => selectResponse(key, oi, btn);
+            optWrap.appendChild(btn);
+          });
+          card.appendChild(q);
+        });
+        wrap.appendChild(card);
+      });
+      updateProgress();
+    }
+
+    function selectResponse(key, value, btn){
+      responses[key] = value;
+      const siblings = btn.parentElement.querySelectorAll('.q-opt');
+      siblings.forEach(b => b.className = 'q-opt');
+      btn.className = 'q-opt sel-' + value;
+      persistDraft();
+      updateProgress();
+    }
+
+    function updateProgress(){
+      const total = domains.reduce((sum,d) => sum + d.items.length, 0);
+      const answered = Object.keys(responses).length;
+      const pct = total ? Math.round((answered / total) * 100) : 0;
+      document.getElementById('progLabel').textContent = `${answered} of ${total} answered`;
+      document.getElementById('progPct').textContent = `${pct}%`;
+      document.getElementById('progBar').style.width = pct + '%';
+    }
+
+    function clearScreening(){
+      Object.keys(responses).forEach(key => delete responses[key]);
+      document.querySelectorAll('#questionContainer .q-opt').forEach(btn => {
+        btn.className = 'q-opt';
+      });
+      latestProfile = null;
+      updateProgress();
+
+      const summary = document.getElementById('scoreSummary');
+      if(summary){
+        summary.innerHTML = 'Screening cleared. Complete the screening and click “Generate profile” to populate scores.';
+      }
+
+      const parentReport = document.getElementById('parent_report');
+      if(parentReport){
+        parentReport.value = 'Complete the intake, screening, and observation sections, then click "Generate profile" to create the parent report.';
+      }
+
+      const practitionerReport = document.getElementById('practitioner_report');
+      if(practitionerReport){
+        practitionerReport.value = 'Complete the intake, screening, and observation sections, then click "Generate profile" to create the practitioner report.';
+      }
+
+      persistDraft();
+      setStatus('Screening responses cleared.');
+    }
+
+    function calculateAge(){
+      const dob = document.getElementById('client_dob').value;
+      if(!dob) return;
+      const dobDate = new Date(dob + 'T00:00:00');
+      if(Number.isNaN(dobDate.getTime())) return;
+      const today = new Date();
+      let years = today.getFullYear() - dobDate.getFullYear();
+      let months = today.getMonth() - dobDate.getMonth();
+      if(months < 0 || (months === 0 && today.getDate() < dobDate.getDate())){
+        years--;
+        months += 12;
+      }
+      document.getElementById('client_age').value = `${Math.max(0, years)} years ${Math.max(0, months)} months`;
+      persistDraft();
+    }
+
+    function gatherFormData(){
+      const ids = [
+        'client_name','client_surname','case_ref','client_dob','client_age','client_gender','client_language',
+        'client_school','client_grade','caregiver_name','caregiver_relationship','caregiver_contact',
+        'referrer_name','assessment_date','assessor_name','assessor_hpcsa','assessor_practice',
+        'medical_aid','referral_reason','developmental_notes','education_notes','obs_behaviour',
+        'obs_communication','obs_sensory','obs_strengths','flag_multidisciplinary','flag_school_support',
+        'flag_urgency','measures_used','parent_report','practitioner_report'
+      ];
+      const obj = {};
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        obj[id] = el ? el.value : '';
+      });
+      return obj;
+    }
+
+    function calculateProfile(){
+      const domainScores = domains.map((domain, di) => {
+        let sum = 0;
+        let count = 0;
+        domain.items.forEach((item, qi) => {
+          const key = `${di}-${qi}`;
+          if(typeof responses[key] === 'number'){
+            sum += responses[key];
+            count++;
+          }
+        });
+        const max = domain.items.length * 3;
+        const pct = max ? Math.round((sum / max) * 100) : 0;
+        return { name: domain.name, sum, max, pct, count, total: domain.items.length, color: domain.color };
+      });
+
+      const totalSum = domainScores.reduce((a,b) => a + b.sum, 0);
+      const totalMax = domainScores.reduce((a,b) => a + b.max, 0);
+      const overallPct = totalMax ? Math.round((totalSum / totalMax) * 100) : 0;
+
+      let concern = 'Low current concern';
+      let concernText = 'Screening responses currently reflect fewer autism-related features across the measured domains. This does not rule out clinically meaningful concerns if developmental history or observation suggests otherwise.';
+      let reportTone = 'At present, the screening profile does not suggest a high concentration of autism-related indicators across domains.';
+      let color = 'var(--teal)';
+      if(overallPct >= 35 && overallPct < 60){
+        concern = 'Moderate concern';
+        concernText = 'The screening pattern reflects notable features across multiple domains. A fuller assessment using developmental history, direct observation, and appropriate standardised measures is recommended.';
+        reportTone = 'The screening profile suggests a meaningful number of autism-related features that warrant further exploration.';
+        color = 'var(--gold)';
+      } else if(overallPct >= 60){
+        concern = 'High concern';
+        concernText = 'The screening pattern reflects pronounced and cross-domain autism-related features. Prompt referral for comprehensive evaluation by an appropriately registered diagnosing professional is recommended.';
+        reportTone = 'The screening profile reflects a high concentration of autism-related features across several domains.';
+        color = 'var(--coral)';
+      }
+
+      latestProfile = { domainScores, overallPct, concern, concernText, reportTone, color, answered: Object.keys(responses).length };
+      renderScores();
+      generateReports();
+      goTab('reports');
+      persistDraft();
+    }
+
+    function renderScores(){
+      const el = document.getElementById('scoreSummary');
+      if(!latestProfile){
+        el.innerHTML = '<span class="small">Complete the screening first.</span>';
+        return;
+      }
+      const p = latestProfile;
+      const topDomains = [...p.domainScores].sort((a,b) => b.pct - a.pct).slice(0,3).map(d => d.name);
+      el.innerHTML = `
+        <div class="score-panel">
+          <div class="ring">
+            <div class="small">Overall concern index</div>
+            <div class="ring-num" style="color:${p.color}">${p.overallPct}%</div>
+            <div style="margin-top:8px;font-weight:700">${p.concern}</div>
+            <div class="footer-note">${p.concernText}</div>
+          </div>
+          <div>
+            <div class="domain-grid">
+              ${p.domainScores.map(d => `
+                <div class="ds">
+                  <div class="ds-name">${d.name}</div>
+                  <div class="ds-bar"><div style="width:${d.pct}%;background:${d.color}"></div></div>
+                  <div class="ds-val" style="color:${d.color}">${d.pct}% • ${d.count}/${d.total} answered</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="pill-grid">
+              ${topDomains.map(d => `<span class="pill">Higher concern area: ${d}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getReferralFlags(){
+      const flags = [
+        document.getElementById('flag_multidisciplinary').value,
+        document.getElementById('flag_school_support').value,
+        document.getElementById('flag_urgency').value
+      ].filter(Boolean).filter(v => v !== 'No immediate flag');
+      return flags;
+    }
+
+    function safeValue(id, fallback='[Not entered]'){
+      const el = document.getElementById(id);
+      return el && el.value ? el.value.trim() : fallback;
+    }
+
+    function generateReports(){
+      if(!latestProfile) calculateProfile();
+      const p = latestProfile;
+      const name = `${safeValue('client_name','[Client]')} ${safeValue('client_surname','')}`.trim();
+      const assessmentDate = safeValue('assessment_date', todayISO());
+      const dob = safeValue('client_dob');
+      const age = safeValue('client_age');
+      const assessor = safeValue('assessor_name','[Psychometrist]');
+      const hpcsa = safeValue('assessor_hpcsa','[HPCSA no.]');
+      const practice = safeValue('assessor_practice','[Practice no.]');
+      const caregiver = safeValue('caregiver_name');
+      const reason = safeValue('referral_reason');
+      const developmental = safeValue('developmental_notes');
+      const educational = safeValue('education_notes');
+      const behaviour = safeValue('obs_behaviour');
+      const communication = safeValue('obs_communication');
+      const sensory = safeValue('obs_sensory');
+      const strengths = safeValue('obs_strengths');
+      const measures = safeValue('measures_used');
+      const flags = getReferralFlags();
+      const topDomains = [...p.domainScores].sort((a,b) => b.pct - a.pct).slice(0,3);
+      const topText = topDomains.map(d => `${d.name} (${d.pct}%)`).join(', ');
+
+      const parentText = `PARENT / CAREGIVER FEEDBACK REPORT
+Confidential screening feedback
+
+Client: ${name}
+Date of birth: ${dob}
+Age: ${age}
+Assessment date: ${assessmentDate}
+Caregiver: ${caregiver}
+Prepared by: ${assessor}
+
+1. PURPOSE OF THIS FEEDBACK
+This feedback summarises information gathered from intake, structured screening, and observed presentation. It is intended to guide next steps and support understanding of the child’s current profile. It is not a diagnostic report.
+
+2. REASON FOR REFERRAL
+${reason}
+
+3. SUMMARY OF CURRENT SCREENING PROFILE
+The screening profile falls in the ${p.concern.toLowerCase()} range (${p.overallPct}% overall concern index).
+${p.reportTone}
+
+Areas that stood out most in the current screening profile:
+${topDomains.map((d, i) => `${i+1}. ${d.name}: ${d.pct}%`).join('\n')}
+
+4. OBSERVED AND REPORTED PATTERN
+Developmental / background information:
+${developmental}
+
+Education / participation information:
+${educational}
+
+Observed strengths and positive factors:
+${strengths}
+
+Observed behaviour and communication features:
+- Behaviour / engagement: ${behaviour}
+- Communication / social interaction: ${communication}
+- Sensory / regulation: ${sensory}
+
+5. WHAT THIS MEANS
+These results suggest that there are ${p.concern === 'Low current concern' ? 'some limited' : p.concern === 'Moderate concern' ? 'a meaningful number of' : 'clear and wide-ranging'} autism-related features currently being reported or observed. This pattern should be understood alongside the child’s developmental history, daily functioning, and, where relevant, further professional assessment.
+
+6. RECOMMENDED NEXT STEPS
+${p.concern === 'Low current concern'
+? `1. Continue to monitor social communication, regulation, and participation concerns over time.
+2. Consider follow-up if caregivers, teachers, or therapists continue to observe concerns.
+3. Use practical support strategies at home and school based on the child’s strengths and needs.`
+: p.concern === 'Moderate concern'
+? `1. Consider a fuller developmental and psychological assessment.
+2. Discuss whether speech-language, occupational therapy, and school support input would be helpful.
+3. Share this summary with relevant professionals involved in the child’s care, if consent is given.`
+: `1. Arrange a comprehensive diagnostic evaluation with an appropriately registered psychologist, psychiatrist, or medical practitioner.
+2. Consider multidisciplinary input, including speech-language therapy, occupational therapy, and school support planning.
+3. Put practical support measures in place while awaiting further assessment.`}
+
+7. IMPORTANT NOTE
+This screening feedback does not make or confirm a diagnosis. It is intended to help identify areas of concern, describe current functioning, and support referral planning where appropriate.
+
+Prepared by:
+${assessor}
+HPCSA: ${hpcsa}
+Practice no.: ${practice}`;
+
+      const practitionerText = `PRACTITIONER / REFERRAL REPORT
+Preliminary psychometrist screening summary for onward referral
+
+Client: ${name}
+Case reference: ${safeValue('case_ref')}
+Date of birth: ${dob}
+Age: ${age}
+School / setting: ${safeValue('client_school')}
+Grade / year: ${safeValue('client_grade')}
+Assessment date: ${assessmentDate}
+Referrer: ${safeValue('referrer_name')}
+Assessor: ${assessor}
+HPCSA registration: ${hpcsa}
+Practice number: ${practice}
+
+1. REFERRAL QUESTION
+${reason}
+
+2. CONTEXTUAL HISTORY
+Developmental and medical notes:
+${developmental}
+
+Educational and participation notes:
+${educational}
+
+3. PROCEDURES / SOURCES OF INFORMATION
+- Intake interview / developmental history
+- Structured autism-related screening questionnaire
+- Behavioural and communication observations during contact
+- Additional measures administered or planned: ${measures}
+
+4. SCREENING PROFILE
+Overall concern index: ${p.overallPct}% (${p.concern})
+
+Domain breakdown:
+${p.domainScores.map(d => `- ${d.name}: ${d.pct}% (${d.count}/${d.total} items completed)`).join('\n')}
+
+Higher-concern domains:
+${topDomains.map((d,i)=>`${i+1}. ${d.name} (${d.pct}%)`).join('\n')}
+
+5. OBSERVATIONS DURING CONTACT
+Behavioural presentation:
+${behaviour}
+
+Communication / social reciprocity:
+${communication}
+
+Sensory / emotional regulation:
+${sensory}
+
+Strengths / protective factors:
+${strengths}
+
+6. PRELIMINARY IMPRESSION WITHIN PSYCHOMETRIST SCOPE
+Current screening findings indicate ${p.concern === 'Low current concern' ? 'a lower concentration of' : p.concern === 'Moderate concern' ? 'a clinically notable pattern of' : 'a pronounced pattern of'} autism-related features across the information gathered. The strongest current areas of concern were ${topText}. These findings should be interpreted as screening indicators and descriptive findings only, and not as a formal diagnosis.
+
+7. REFERRAL INDICATIONS
+${flags.length ? flags.map((f,i)=>`${i+1}. ${f}`).join('\n') : '1. No additional referral flags were selected beyond the current screening findings.'}
+
+Recommended onward referral / action:
+${p.concern === 'Low current concern'
+? `- Consider follow-up monitoring and further assessment only if concerns persist across settings.
+- Consider targeted support planning based on functional concerns already observed.`
+: p.concern === 'Moderate concern'
+? `- Comprehensive assessment by an appropriately registered psychologist or relevant multidisciplinary team is recommended.
+- Consider speech-language, occupational therapy, adaptive functioning, and school support input as clinically indicated.`
+: `- Prompt comprehensive diagnostic evaluation by an appropriately registered psychologist, psychiatrist, or medical practitioner is recommended.
+- A multidisciplinary assessment pathway is strongly indicated.
+- School, therapy, and caregiver support planning should proceed without waiting for diagnostic finalisation where support needs are already clear.`}
+
+8. SCOPE NOTE
+This report was prepared by a registered psychometrist and is intended to document screening findings, observed presentation, and referral rationale. It does not constitute a diagnostic formulation. Diagnostic conclusions and formal diagnosis remain the responsibility of an appropriately registered diagnosing professional.
+
+Signed:
+${assessor}
+HPCSA: ${hpcsa}
+Practice no.: ${practice}`;
+
+      document.getElementById('parent_report').value = parentText;
+      document.getElementById('practitioner_report').value = practitionerText;
+    }
+
+    function regenerateReports(){
+      if(!latestProfile){
+        calculateProfile();
+      }else{
+        generateReports();
+      }
+    }
+
+    function copyText(id){
+      const el = document.getElementById(id);
+      navigator.clipboard.writeText(el.value).then(() => setStatus('Copied to clipboard.'));
+    }
+
+    function downloadTextFile(id, filename){
+      const blob = new Blob([document.getElementById(id).value], { type:'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportAssessmentJSON(){
+      const payload = buildSavePayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeValue('case_ref','case')}-autism-screening.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadHTMLSnapshot(){
+      const blob = new Blob([document.documentElement.outerHTML], { type:'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'autism_screening_tool_snapshot.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildSavePayload(){
+      const data = gatherFormData();
+      const payload = {
+        case_ref: data.case_ref || null,
+        client_name: data.client_name || null,
+        client_surname: data.client_surname || null,
+        client_dob: data.client_dob || null,
+        client_age: data.client_age || null,
+        client_gender: data.client_gender || null,
+        client_language: data.client_language || null,
+        client_school: data.client_school || null,
+        client_grade: data.client_grade || null,
+        caregiver_name: data.caregiver_name || null,
+        caregiver_relationship: data.caregiver_relationship || null,
+        caregiver_contact: data.caregiver_contact || null,
+        referrer_name: data.referrer_name || null,
+        assessment_date: data.assessment_date || null,
+        assessor_name: data.assessor_name || null,
+        assessor_hpcsa: data.assessor_hpcsa || null,
+        assessor_practice: data.assessor_practice || null,
+        medical_aid: data.medical_aid || null,
+        referral_reason: data.referral_reason || null,
+        developmental_notes: data.developmental_notes || null,
+        education_notes: data.education_notes || null,
+        obs_behaviour: data.obs_behaviour || null,
+        obs_communication: data.obs_communication || null,
+        obs_sensory: data.obs_sensory || null,
+        obs_strengths: data.obs_strengths || null,
+        flag_multidisciplinary: data.flag_multidisciplinary || null,
+        flag_school_support: data.flag_school_support || null,
+        flag_urgency: data.flag_urgency || null,
+        measures_used: data.measures_used || null,
+        responses_json: responses,
+        profile_json: latestProfile,
+        parent_report: data.parent_report || null,
+        practitioner_report: data.practitioner_report || null,
+        updated_at_client: new Date().toISOString()
+      };
+      return payload;
+    }
+
+    function saveSupabaseConfig(){
+      const config = {
+        url: document.getElementById('sb_url').value.trim(),
+        key: document.getElementById('sb_key').value.trim(),
+        table: document.getElementById('sb_table').value.trim() || 'autism_screening_cases'
+      };
+      localStorage.setItem('autismToolSupabaseConfig', JSON.stringify(config));
+      setStatus('Supabase config saved locally in this browser.');
+    }
+
+    function loadSupabaseConfig(){
+      const raw = localStorage.getItem('autismToolSupabaseConfig');
+      if(!raw) return;
+      try{
+        const cfg = JSON.parse(raw);
+        document.getElementById('sb_url').value = cfg.url || '';
+        document.getElementById('sb_key').value = cfg.key || '';
+        document.getElementById('sb_table').value = cfg.table || 'autism_screening_cases';
+      }catch(err){}
+    }
+
+    async function getSupabaseClient(){
+      const url = document.getElementById('sb_url').value.trim();
+      const key = document.getElementById('sb_key').value.trim();
+      if(!url || !key){
+        throw new Error('Enter the Supabase URL and anon key first.');
+      }
+      return window.supabase.createClient(url, key);
+    }
+
+    async function testSupabaseConnection(){
+      try{
+        const client = await getSupabaseClient();
+        const table = document.getElementById('sb_table').value.trim() || 'autism_screening_cases';
+        const { error } = await client.from(table).select('id', { count: 'exact', head: true });
+        if(error) throw error;
+        setStatus('Supabase connection test passed.');
+      }catch(err){
+        setStatus('Connection test failed: ' + err.message, true);
+      }
+    }
+
+    async function saveCaseToSupabase(){
+      try{
+        if(!latestProfile) calculateProfile();
+        saveSupabaseConfig();
+        const client = await getSupabaseClient();
+        const table = document.getElementById('sb_table').value.trim() || 'autism_screening_cases';
+        const payload = buildSavePayload();
+        const { error } = await client.from(table).upsert(payload, { onConflict: 'case_ref' });
+        if(error) throw error;
+        setStatus(`Case ${payload.case_ref || ''} saved to Supabase.`);
+      }catch(err){
+        setStatus('Save failed: ' + err.message, true);
+      }
+    }
+
+    function renderSQLSnippet(){
+      const table = document.getElementById('sb_table').value || 'autism_screening_cases';
+      document.getElementById('sqlSnippet').textContent =
+`create extension if not exists pgcrypto;
+
+create table if not exists public.${table} (
+  id uuid primary key default gen_random_uuid(),
+  case_ref text unique,
+  client_name text,
+  client_surname text,
+  client_dob date,
+  client_age text,
+  client_gender text,
+  client_language text,
+  client_school text,
+  client_grade text,
+  caregiver_name text,
+  caregiver_relationship text,
+  caregiver_contact text,
+  referrer_name text,
+  assessment_date date,
+  assessor_name text,
+  assessor_hpcsa text,
+  assessor_practice text,
+  medical_aid text,
+  referral_reason text,
+  developmental_notes text,
+  education_notes text,
+  obs_behaviour text,
+  obs_communication text,
+  obs_sensory text,
+  obs_strengths text,
+  flag_multidisciplinary text,
+  flag_school_support text,
+  flag_urgency text,
+  measures_used text,
+  responses_json jsonb,
+  profile_json jsonb,
+  parent_report text,
+  practitioner_report text,
+  updated_at_client timestamptz,
+  created_at timestamptz not null default now()
+);
+
+alter table public.${table} enable row level security;
+
+create policy if not exists "anon_insert_${table}"
+on public.${table}
+for insert
+to anon
+with check (true);
+
+create policy if not exists "anon_update_${table}"
+on public.${table}
+for update
+to anon
+using (true)
+with check (true);
+
+create policy if not exists "anon_select_${table}"
+on public.${table}
+for select
+to anon
+using (true);`;
+    }
+
+    function setStatus(message, isError=false){
+      const el = document.getElementById('saveStatus');
+      el.textContent = message;
+      el.style.color = isError ? 'var(--danger)' : 'var(--teal-dark)';
+    }
+
+    function goTab(tab){
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    }
+
+    document.getElementById('nav').addEventListener('click', e => {
+      if(e.target.dataset.tab) goTab(e.target.dataset.tab);
+    });
+
+    document.getElementById('client_dob').addEventListener('change', calculateAge);
+    document.getElementById('sb_table').addEventListener('input', renderSQLSnippet);
+
+    function clearSection(sectionId){
+      document.querySelectorAll('#' + sectionId + ' input, #' + sectionId + ' select, #' + sectionId + ' textarea').forEach(el => {
+        if(el.type === 'date' || el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
+        if(el.tagName === 'SELECT') el.selectedIndex = 0;
+      });
+      if(sectionId === 'tab-intake'){
+        document.getElementById('assessment_date').value = todayISO();
+        ensureCaseRef(true);
+      }
+      persistDraft();
+    }
+
+    function persistDraft(){
+      const draft = {
+        form: gatherFormData(),
+        responses
+      };
+      localStorage.setItem('autismToolDraft', JSON.stringify(draft));
+    }
+
+    function restoreDraft(){
+      const raw = localStorage.getItem('autismToolDraft');
+      if(!raw){
+        ensureCaseRef(false);
+        return;
+      }
+      try{
+        const draft = JSON.parse(raw);
+        Object.entries(draft.form || {}).forEach(([id, value]) => {
+          const el = document.getElementById(id);
+          if(el && typeof value === 'string') el.value = value;
+        });
+        ensureCaseRef(false);
+        Object.entries(draft.responses || {}).forEach(([key, value]) => {
+          responses[key] = value;
+          const wrap = document.getElementById('opts-' + key);
+          if(wrap){
+            const btn = wrap.querySelectorAll('.q-opt')[value];
+            if(btn){
+              wrap.querySelectorAll('.q-opt').forEach(b => b.className = 'q-opt');
+              btn.className = 'q-opt sel-' + value;
+            }
+          }
+        });
+        updateProgress();
+      }catch(err){
+        ensureCaseRef(false);
+      }
+    }
+
+    function autoSaveForm(){
+      document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.addEventListener('input', persistDraft);
+        el.addEventListener('change', persistDraft);
+      });
+    }
+
+    initDefaults();
+    restoreDraft();
+  </script>
+</body>
+</html>
